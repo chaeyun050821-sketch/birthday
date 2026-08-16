@@ -508,24 +508,20 @@ function RoomView({
             type="button"
             disabled={done || locked}
             onClick={()=>!done && !locked && onInspect(q)}
-            className={`absolute z-10 ${!done && !locked ? 'cursor-pointer' : 'cursor-default'}`}
+            className={`absolute z-10 flex items-center justify-center ${!done && !locked ? 'cursor-pointer' : 'cursor-default'}`}
             style={{
               left:`${q.x}%`,
               top:`${q.y}%`,
               transform:'translate(-50%,-50%)',
-              width: isMuro ? 56 : undefined,
-              height: isMuro ? 56 : undefined,
             }}
             aria-label="조사"
           >
-            {!isMuro && (
-              <span
-                className="text-3xl drop-shadow-[0_2px_6px_rgba(0,0,0,0.7)]"
-                style={{ filter: done ? 'grayscale(0.4)' : locked ? 'grayscale(1) brightness(0.5)' : 'none' }}
-              >
-                {done ? '✅' : locked ? '🔒' : q.emoji}
-              </span>
-            )}
+            <span
+              className="text-3xl drop-shadow-[0_2px_6px_rgba(0,0,0,0.7)]"
+              style={{ filter: done ? 'grayscale(0.4)' : locked ? 'grayscale(1) brightness(0.5)' : 'none' }}
+            >
+              {done ? '✅' : locked ? '🔒' : q.emoji}
+            </span>
           </button>
         )
       })}
