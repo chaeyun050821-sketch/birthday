@@ -39,7 +39,7 @@ const QUESTS: Quest[] = [
     object:'액자', inspect:'액자 뒤에 쪽지가 숨겨져 있다.',
     x:90, y:36, baseReward:10000,
     question:'우리가 첫키스 한 장소는? (장소로 써 줘)', hint:'니가 먼저 했잖아',
-    answers:['장재리'], emoji:'💋' },
+    answers:['장재리'], emoji:'❤️' },
   { id:'w4', tier:'warmup', room:'memory', title:'핸드폰', subtitle:'카톡이 켜져 있다',
     object:'핸드폰', inspect:'오래된 카톡 창이 그대로 남아 있다. 첫 메시지가…',
     x:78, y:68, baseReward:10000,
