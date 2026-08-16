@@ -27,28 +27,28 @@ const HINT_PENALTY = 3000
 const QUESTS: Quest[] = [
   { id:'w1', tier:'warmup', room:'memory', title:'달력', subtitle:'날짜가 동그라미 쳐져 있다',
     object:'달력', inspect:'벽에 걸린 달력. 어떤 날이 진하게 표시돼 있어.',
-    x:18, y:38, baseReward:10000,
+    x:22, y:68, baseReward:10000,
     question:'우리가 사귀게 된 날짜는? (8자리로 써 줘, YYYYMMDD)', hint:'이거 모르면 뒤지셈',
     answers:['20240308'], emoji:'🗓️' },
   { id:'w2', tier:'warmup', room:'memory', title:'영화 티켓', subtitle:'접힌 티켓 한 장',
     object:'티켓', inspect:'서랍에서 영화 티켓이 나왔다. 제목이 흐릿하다.',
-    x:40, y:58, baseReward:10000,
+    x:24, y:46, baseReward:10000,
     question:'우리가 처음 같이 본 영화는?', hint:'개노잼이라 잤음 😴',
     answers:['웡카','wonka','Wonka'], emoji:'🎬' },
   { id:'w3', tier:'warmup', room:'memory', title:'사진', subtitle:'그날의 장소',
     object:'액자', inspect:'액자 뒤에 쪽지가 숨겨져 있다.',
-    x:62, y:36, baseReward:10000,
+    x:90, y:36, baseReward:10000,
     question:'우리가 첫키스 한 장소는? (장소로 써 줘)', hint:'니가 먼저 했잖아',
     answers:['장재리'], emoji:'💋' },
   { id:'w4', tier:'warmup', room:'memory', title:'핸드폰', subtitle:'카톡이 켜져 있다',
     object:'핸드폰', inspect:'오래된 카톡 창이 그대로 남아 있다. 첫 메시지가…',
-    x:78, y:62, baseReward:10000,
+    x:78, y:68, baseReward:10000,
     question:'오빠가 나한테 카톡으로 한 첫마디는?',
     hint:'한글자',
     answers:['ㅋ'], emoji:'💬' },
   { id:'w5', tier:'warmup', room:'memory', title:'베개', subtitle:'잠들기 전의 말',
     object:'베개', inspect:'베개 밑에 쪽지가 끼어 있다.',
-    x:28, y:74, baseReward:10000,
+    x:12, y:44, baseReward:10000,
     question:'오빠가 자기 전에 나한테 꼭 하는 말은?', hint:'내가 맨날 시킴',
     answers:['잘자 사랑해','사랑해 잘자','잘자사랑해','사랑해잘자','잘 자 사랑해','사랑해 잘 자'], emoji:'🌙' },
 
@@ -99,7 +99,7 @@ const QUESTS: Quest[] = [
 ]
 
 const ROOMS: { id: RoomId; name: string; hint: string }[] = [
-  { id:'memory', name:'추억의 방', hint:'물건을 눌러 단서를 찾아봐.' },
+  { id:'memory', name:'무로', hint:'카페를 둘러보고, 눈에 띄는 곳을 눌러봐.' },
   { id:'clue',   name:'서재',     hint:'책상과 벽을 수색해.' },
   { id:'vault',  name:'금고방',   hint:'키패드가 깜빡이고 있어.' },
   { id:'exit',   name:'출구',     hint:'마지막 문이 기다리고 있어.' },
@@ -111,7 +111,7 @@ const MAX_LIVES   = 5
 const TOTAL_BASE  = QUESTS.reduce((s,q)=>s+q.baseReward,0)
 
 const TIER = {
-  warmup: { label:'추억의 방', en:'ROOM 1', color:'#fbbf24', light:'#3b2a12', border:'#a16207' },
+  warmup: { label:'무로', en:'MURO', color:'#fbbf24', light:'#3b2a12', border:'#a16207' },
   middle: { label:'서재', en:'ROOM 2', color:'#93c5fd', light:'#1e293b', border:'#3b82f6' },
   hidden: { label:'금고방', en:'ROOM 3', color:'#fcd34d', light:'#3b2f0b', border:'#d97706' },
   final:  { label:'출구', en:'EXIT',  color:'#fca5a5', light:'#3b1515', border:'#dc2626' },
@@ -320,7 +320,7 @@ function InspectModal({
         <div className="px-5 py-3 flex items-center justify-between" style={{background:cfg.light}}>
           <div className="flex items-center gap-2">
             <span className="text-xl">{quest.emoji}</span>
-            <span className="font-bold text-sm" style={{color:cfg.color}}>{quest.object} 조사</span>
+            <span className="font-bold text-sm" style={{color:cfg.color}}>조사</span>
           </div>
           <div className="flex items-center gap-2">
             <span
@@ -431,23 +431,23 @@ function InspectModal({
   )
 }
 
-function CharacterSlot() {
+function CharacterSlot({ center }: { center?: boolean }) {
   const [ok, setOk] = useState(true)
   return (
-    <div className="absolute right-2 bottom-2 z-10 flex flex-col items-center pointer-events-none">
+    <div
+      className={`absolute z-20 flex items-end justify-center pointer-events-none ${
+        center ? 'left-1/2 bottom-[6%] -translate-x-1/2' : 'right-2 bottom-2'
+      }`}
+    >
       {ok ? (
         <img
           src="/character.png"
           alt=""
-          className="h-36 w-auto object-contain drop-shadow-[0_8px_16px_rgba(0,0,0,0.6)]"
+          className={`w-auto object-contain ${center ? 'h-44 sm:h-52' : 'h-36'} drop-shadow-[0_10px_18px_rgba(0,0,0,0.55)]`}
           onError={()=>setOk(false)}
         />
       ) : (
-        <div
-          className="h-36 w-24 rounded-t-full border-2 border-dashed border-amber-700/50 bg-black/30 flex items-end justify-center pb-3 text-[10px] text-amber-600/80 text-center leading-tight px-1"
-        >
-          캐릭터<br/>사진 자리
-        </div>
+        <div className="h-36 w-24 rounded-t-full border-2 border-dashed border-amber-700/50 bg-black/30" />
       )}
     </div>
   )
@@ -470,20 +470,27 @@ function RoomView({
     exit:   { wall:'#3b1518', floor:'#1a0c0e', accent:'#7f1d1d' },
   }
   const pal = palettes[room]
+  const isMuro = room === 'memory'
 
   return (
     <div
       className="relative mx-4 mt-3 rounded-2xl overflow-hidden"
       style={{
         height: 'min(62vh, 480px)',
-        background: `linear-gradient(180deg, ${pal.wall} 0%, ${pal.wall} 58%, ${pal.accent} 58%, ${pal.floor} 100%)`,
+        background: isMuro
+          ? 'center / cover no-repeat url(/rooms/muro.png)'
+          : `linear-gradient(180deg, ${pal.wall} 0%, ${pal.wall} 58%, ${pal.accent} 58%, ${pal.floor} 100%)`,
         boxShadow:'inset 0 0 80px rgba(0,0,0,0.45)',
         border:'2px solid #3a2a1c',
       }}
     >
-      <div className="lamp-flicker absolute left-1/2 top-2 w-24 h-10 -translate-x-1/2 rounded-full bg-amber-300/20 blur-md pointer-events-none" />
-      <div className="absolute left-[8%] top-[18%] w-[84%] h-[38%] rounded-sm opacity-20 pointer-events-none"
-        style={{ background:'linear-gradient(180deg, transparent, rgba(0,0,0,0.5))', border:'8px solid rgba(0,0,0,0.15)' }} />
+      {!isMuro && (
+        <>
+          <div className="lamp-flicker absolute left-1/2 top-2 w-24 h-10 -translate-x-1/2 rounded-full bg-amber-300/20 blur-md pointer-events-none" />
+          <div className="absolute left-[8%] top-[18%] w-[84%] h-[38%] rounded-sm opacity-20 pointer-events-none"
+            style={{ background:'linear-gradient(180deg, transparent, rgba(0,0,0,0.5))', border:'8px solid rgba(0,0,0,0.15)' }} />
+        </>
+      )}
       {room==='exit' && (
         <div className="absolute left-1/2 top-[22%] -translate-x-1/2 w-28 h-[46%] rounded-t-lg border-4 border-black/40"
           style={{ background:'linear-gradient(180deg,#4a1c1c,#2a1010)' }} />
@@ -501,24 +508,29 @@ function RoomView({
             type="button"
             disabled={done || locked}
             onClick={()=>!done && !locked && onInspect(q)}
-            className={`absolute z-10 flex flex-col items-center ${!done && !locked ? 'hotspot cursor-pointer' : 'cursor-default'}`}
-            style={{ left:`${q.x}%`, top:`${q.y}%`, transform:'translate(-50%,-50%)' }}
-            title={locked ? '아직 잠겨 있어' : q.object}
+            className={`absolute z-10 ${!done && !locked ? 'cursor-pointer' : 'cursor-default'}`}
+            style={{
+              left:`${q.x}%`,
+              top:`${q.y}%`,
+              transform:'translate(-50%,-50%)',
+              width: isMuro ? 56 : undefined,
+              height: isMuro ? 56 : undefined,
+            }}
+            aria-label="조사"
           >
-            <span
-              className="text-3xl drop-shadow-[0_2px_6px_rgba(0,0,0,0.7)]"
-              style={{ filter: done ? 'grayscale(0.4)' : locked ? 'grayscale(1) brightness(0.5)' : 'none' }}
-            >
-              {done ? '✅' : locked ? '🔒' : q.emoji}
-            </span>
-            <span className="mt-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded bg-black/55 text-amber-100 whitespace-nowrap">
-              {q.object}
-            </span>
+            {!isMuro && (
+              <span
+                className="text-3xl drop-shadow-[0_2px_6px_rgba(0,0,0,0.7)]"
+                style={{ filter: done ? 'grayscale(0.4)' : locked ? 'grayscale(1) brightness(0.5)' : 'none' }}
+              >
+                {done ? '✅' : locked ? '🔒' : q.emoji}
+              </span>
+            )}
           </button>
         )
       })}
 
-      <CharacterSlot />
+      <CharacterSlot center={isMuro} />
     </div>
   )
 }
