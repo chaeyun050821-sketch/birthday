@@ -1,0 +1,10 @@
+{
+  "description": "Unlock personalized birthday surprises by solving custom quizzes that blend shared memories and fun challenges in an engaging escape-room style game.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
