@@ -1000,7 +1000,6 @@ export default function App() {
   const applyCloud = useCallback((remote: Progress) => {
     applyingRemote.current = true
     if (remote.unlocked) setUnlocked(true)
-    setRoom(prev => Object.keys(remote.solved).length ? remote.room : prev)
     setSolved(prev => {
       const merged = { ...Object.fromEntries(prev), ...remote.solved }
       const same = prev.size === Object.keys(merged).length && [...prev].every(([k, v]) => merged[k] === v)
