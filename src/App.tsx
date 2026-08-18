@@ -858,13 +858,13 @@ function RoomView({
         <CharacterSlot
           place={isMuro ? 'center' : 'right'}
           small={isHome}
-          src={isHome ? '/character-girl.png?v=2' : '/character.png'}
+          src={isHome ? '/character-girl.png?v=3' : '/character.png?v=3'}
         />
       )}
       {isKaraoke && (
         <CharacterSlot
           place="left"
-          src="/character-girl.png?v=2"
+          src="/character-girl.png?v=3"
         />
       )}
     </div>

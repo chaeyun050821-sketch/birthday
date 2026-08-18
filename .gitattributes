@@ -145,6 +145,7 @@
 *.nc                 filter=lfs diff=lfs merge=lfs -text
 *.mat                filter=lfs diff=lfs merge=lfs -text
 
-# Keep game sprites in-repo without LFS (no git-lfs on this machine)
+# Keep game sprites in-repo without LFS (Vercel builds skip Git LFS by default)
 public/character.png -filter -diff -merge
+public/character-girl.png -filter -diff -merge
 public/rooms/*.png -filter -diff -merge
