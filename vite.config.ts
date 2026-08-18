@@ -33,6 +33,12 @@ function progressApiPlugin(): Plugin {
       req.on('data', (c: Buffer) => { body += c.toString() })
       req.on('end', () => {
         const incoming = body ? JSON.parse(body) as Record<string, unknown> : {}
+        if (incoming.reset === true) {
+          fs.writeFileSync(file, '{}')
+          res.setHeader('Content-Type', 'application/json')
+          res.end('{}')
+          return
+        }
         const nextStore = { ...read(), ...incoming }
         fs.writeFileSync(file, JSON.stringify(nextStore))
         res.setHeader('Content-Type', 'application/json')

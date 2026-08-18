@@ -63,6 +63,11 @@ export default function handler(req, res) {
   }
   if (req.method === 'PUT') {
     const incoming = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {})
+    if (incoming.reset === true) {
+      writeStore({})
+      res.status(200).json({})
+      return
+    }
     const cur = readStore()
     const next = { ...cur }
     for (const [k, v] of Object.entries(incoming)) {

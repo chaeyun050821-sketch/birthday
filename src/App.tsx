@@ -45,6 +45,7 @@ const HINT_PENALTY = 10000
 const LETTER_ID = 'letter'
 const LETTER_REWARD = 5000
 const INVITE_CODE = '050821'
+const RESET_PIN = '061012'
 const SAVE_KEY = 'birthday-progress'
 
 function emptyProgress(): Progress {
@@ -891,6 +892,9 @@ export default function App() {
   const [attempts, setAttempts] = useState<Attempt[]>(boot.attempts)
   const [invite, setInvite] = useState('')
   const [inviteErr, setInviteErr] = useState(false)
+  const [resetOpen, setResetOpen] = useState(false)
+  const [resetPin, setResetPin] = useState('')
+  const [resetErr, setResetErr] = useState(false)
   const [syncing, setSyncing] = useState(false)
   const applyingRemote = useRef(false)
   const [active, setActive] = useState<Quest|null>(null)
@@ -907,7 +911,7 @@ export default function App() {
     misses.forEach((n, id) => { if (n >= MAX_TRIES) s.add(id) })
     return s
   }, [misses])
-  const allDone = quests.every(q => solved.has(q.id))
+  const allTried = quests.every(q => solved.has(q.id) || failedIds.has(q.id))
 
   const snapshot = useMemo((): Progress => ({
     unlocked,
@@ -984,11 +988,11 @@ export default function App() {
     const reward = q.baseReward - (hintUsed ? HINT_PENALTY : 0)
     setSolved(prev=>new Map([...prev, [q.id, reward]]))
     setActive(null)
-    const unlockingExit = q.room !== 'exit' && quests.filter(x => x.room !== 'exit' && x.id !== q.id).every(x => solved.has(x.id))
+    const unlockingExit = q.room !== 'exit' && quests.filter(x => x.room !== 'exit' && x.id !== q.id).every(x => solved.has(x.id) || failedIds.has(x.id))
     setNarration(unlockingExit ? '사랑해 방이 열렸다.' : `${q.object}의 자물쇠가 열렸다.`)
     spawnCoins(el)
     setTimeout(()=>{ setPoppingMoney(true); setTimeout(()=>setPoppingMoney(false), 450) }, 200)
-  }, [spawnCoins, quests, solved])
+  }, [spawnCoins, quests, solved, failedIds])
 
   const handleOpenLetter = useCallback(() => {
     setSolved(prev => {
@@ -999,12 +1003,19 @@ export default function App() {
   }, [])
 
   const handleWrong = useCallback((id: string)=>{
+    const nextCount = (misses.get(id) ?? 0) + 1
     setMisses(prev => {
       const next = new Map(prev)
       next.set(id, (next.get(id) ?? 0) + 1)
       return next
     })
-  }, [])
+    if (nextCount >= MAX_TRIES) {
+      const unlockingExit = quests.every(x =>
+        x.id === id || solved.has(x.id) || failedIds.has(x.id)
+      )
+      if (unlockingExit) setNarration('사랑해 방이 열렸다.')
+    }
+  }, [misses, quests, solved, failedIds])
 
   const handleAttempt = useCallback((q: Quest, input: string, correct: boolean) => {
     setAttempts(prev => [...prev, {
@@ -1016,6 +1027,37 @@ export default function App() {
       at: Date.now(),
     }])
   }, [])
+
+  const resetGame = async () => {
+    if (resetPin !== RESET_PIN) {
+      setResetErr(true)
+      return
+    }
+    applyingRemote.current = true
+    setUnlocked(false)
+    setStarted(false)
+    setRoom('memory')
+    setSolved(new Map())
+    setMisses(new Map())
+    setAttempts([])
+    setShowFinal(false)
+    setActive(null)
+    setInvite('')
+    persistProgress(emptyProgress())
+    try { localStorage.removeItem(SAVE_KEY) } catch { /* ignore */ }
+    try { document.cookie = `${SAVE_KEY}=;max-age=0;path=/;SameSite=Lax` } catch { /* ignore */ }
+    try {
+      await fetch('/api/progress', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reset: true }),
+      })
+    } catch { /* ignore */ }
+    setResetOpen(false)
+    setResetPin('')
+    setResetErr(false)
+    queueMicrotask(() => { applyingRemote.current = false })
+  }
 
   const openDoor = async () => {
     if (!unlocked) {
@@ -1036,7 +1078,7 @@ export default function App() {
     if (unlocked || !hasProgress) setStarted(true)
   }
 
-  const othersDone = allDone
+  const othersDone = allTried
 
   const isLocked = (_q: Quest): boolean => false
 
@@ -1145,6 +1187,67 @@ export default function App() {
       >
         {syncing ? '불러오는 중...' : unlocked ? '이어서 하기 →' : '문을 연다 →'}
       </button>
+
+      <button
+        type="button"
+        onClick={() => { setResetOpen(true); setResetPin(''); setResetErr(false) }}
+        className="mt-6 text-gray-300 hover:text-gray-500 text-[11px] cursor-pointer"
+      >
+        초기화
+      </button>
+
+      {resetOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center px-6"
+          style={{ background: 'rgba(0,0,0,0.35)' }}
+          onClick={() => { setResetOpen(false); setResetPin(''); setResetErr(false) }}
+        >
+          <div
+            className="w-full max-w-xs bg-white rounded-3xl p-6 shadow-lg text-left"
+            onClick={e => e.stopPropagation()}
+          >
+            <p className="text-gray-800 font-black text-sm mb-1">진행 초기화</p>
+            <p className="text-gray-400 text-xs mb-4">비번을 입력하면 풀이 기록이 전부 지워져</p>
+            <input
+              className="w-full rounded-2xl px-4 py-3 text-center text-sm font-mono"
+              style={{
+                background: '#fff',
+                border: `2px solid ${resetErr ? '#dc2626' : '#fecaca'}`,
+                color: '#1f2937',
+                outline: 'none',
+              }}
+              type="password"
+              inputMode="numeric"
+              placeholder="비번"
+              value={resetPin}
+              onChange={e => { setResetPin(e.target.value); setResetErr(false) }}
+              onKeyDown={e => { if (e.key === 'Enter') void resetGame() }}
+              autoComplete="off"
+            />
+            {resetErr && (
+              <p className="text-red-500 text-xs font-bold mt-2">비번이 틀렸어</p>
+            )}
+            <div className="flex gap-2 mt-4">
+              <button
+                type="button"
+                onClick={() => { setResetOpen(false); setResetPin(''); setResetErr(false) }}
+                className="flex-1 rounded-2xl py-3 text-xs font-bold text-gray-500 cursor-pointer"
+                style={{ background: '#f3f4f6' }}
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={() => { void resetGame() }}
+                className="flex-1 rounded-2xl py-3 text-xs font-black text-white cursor-pointer"
+                style={{ background: '#dc2626' }}
+              >
+                초기화
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 
