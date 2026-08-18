@@ -34,9 +34,17 @@ function progressApiPlugin(): Plugin {
       req.on('end', () => {
         const incoming = body ? JSON.parse(body) as Record<string, unknown> : {}
         if (incoming.reset === true) {
-          fs.writeFileSync(file, '{}')
+          const cur = read()
+          const next: Record<string, unknown> = {}
+          for (const [k, v] of Object.entries(cur)) {
+            const p = v as { letter?: string; letterAt?: number }
+            if (p && (p.letter || p.letterAt)) {
+              next[k] = { letter: p.letter || '', letterAt: p.letterAt || 0 }
+            }
+          }
+          fs.writeFileSync(file, JSON.stringify(next))
           res.setHeader('Content-Type', 'application/json')
-          res.end('{}')
+          res.end(JSON.stringify(next))
           return
         }
         const nextStore = { ...read(), ...incoming }

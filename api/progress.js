@@ -38,6 +38,8 @@ function mergeProgress(a = {}, b = {}) {
   attempts.sort((x, y) => (x.at || 0) - (y.at || 0))
   const aN = Object.keys(a.solved || {}).length
   const bN = Object.keys(b.solved || {}).length
+  const aAt = Number(a.letterAt || 0)
+  const bAt = Number(b.letterAt || 0)
   return {
     unlocked: !!(a.unlocked || b.unlocked),
     started: !!(a.started || b.started),
@@ -45,6 +47,8 @@ function mergeProgress(a = {}, b = {}) {
     solved,
     misses,
     attempts,
+    letter: bAt >= aAt ? (b.letter != null ? b.letter : a.letter) : a.letter,
+    letterAt: Math.max(aAt, bAt),
     updatedAt: Math.max(Number(a.updatedAt || 0), Number(b.updatedAt || 0)),
   }
 }
@@ -64,8 +68,15 @@ export default function handler(req, res) {
   if (req.method === 'PUT') {
     const incoming = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {})
     if (incoming.reset === true) {
-      writeStore({})
-      res.status(200).json({})
+      const cur = readStore()
+      const next = {}
+      for (const [k, v] of Object.entries(cur)) {
+        if (v && (v.letter || v.letterAt)) {
+          next[k] = { letter: v.letter || '', letterAt: v.letterAt || 0 }
+        }
+      }
+      writeStore(next)
+      res.status(200).json(next)
       return
     }
     const cur = readStore()

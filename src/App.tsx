@@ -38,6 +38,8 @@ type Progress = {
   solved: Record<string, number>
   misses: Record<string, number>
   attempts: Attempt[]
+  letter?: string
+  letterAt?: number
   updatedAt?: number
 }
 
@@ -47,9 +49,28 @@ const LETTER_REWARD = 5000
 const INVITE_CODE = '050821'
 const RESET_PIN = '061012'
 const SAVE_KEY = 'birthday-progress'
+const LETTER_KEY = 'birthday-love-letter'
+const DEFAULT_LETTER = '오빠 생일 축하해 ㅎㅎ 그냥 돈만 딸랑 주긴 좀 그래서 이런 프로그램 만들어봤는데 마음에 들었으면 좋겠다. 모든 문제를 다 맞혔으면 더 좋고 그건 오빠가 나에 대해 많이 안다는거니까 ㅎㅎ 항상 내 옆에 있어줘서 고맙고 힘이 되어 줘서 고마워. 함께 할수록 더더욱 함께 있어야할 이유가 생기는 것 같아. 오빠랑 있으면 너무 행복하거든. 우리 꼭 내년 생일도 함께 보냈으면 좋겠다. 사랑해 김영욱'
+
+function readLegacyLetter(): string | null {
+  try {
+    const saved = localStorage.getItem(LETTER_KEY)
+    if (saved && saved.trim()) return saved
+  } catch { /* ignore */ }
+  return null
+}
 
 function emptyProgress(): Progress {
-  return { unlocked: false, started: false, room: 'memory', solved: {}, misses: {}, attempts: [] }
+  return {
+    unlocked: false,
+    started: false,
+    room: 'memory',
+    solved: {},
+    misses: {},
+    attempts: [],
+    letter: DEFAULT_LETTER,
+    letterAt: 0,
+  }
 }
 
 function readCookie(name: string): string | null {
@@ -64,17 +85,24 @@ function readCookie(name: string): string | null {
 function loadProgress(): Progress {
   try {
     const raw = localStorage.getItem(SAVE_KEY) || readCookie(SAVE_KEY)
-    if (!raw) return emptyProgress()
-    const p = JSON.parse(raw) as Partial<Progress>
+    const p = raw ? JSON.parse(raw) as Partial<Progress> : {}
+    const legacy = typeof p.letter !== 'string' ? readLegacyLetter() : null
     return {
       ...emptyProgress(),
       ...p,
       solved: p.solved ?? {},
       misses: p.misses ?? {},
       attempts: Array.isArray(p.attempts) ? p.attempts : [],
+      letter: typeof p.letter === 'string' ? p.letter : (legacy ?? DEFAULT_LETTER),
+      letterAt: typeof p.letter === 'string' ? (p.letterAt ?? 0) : (legacy ? Date.now() : 0),
     }
   } catch {
-    return emptyProgress()
+    const legacy = readLegacyLetter()
+    return {
+      ...emptyProgress(),
+      letter: legacy ?? DEFAULT_LETTER,
+      letterAt: legacy ? Date.now() : 0,
+    }
   }
 }
 
@@ -84,6 +112,9 @@ function persistProgress(p: Progress) {
   try {
     document.cookie = `${SAVE_KEY}=${encodeURIComponent(raw)};max-age=31536000;path=/;SameSite=Lax`
   } catch { /* ignore */ }
+  if (typeof p.letter === 'string') {
+    try { localStorage.setItem(LETTER_KEY, p.letter) } catch { /* ignore */ }
+  }
 }
 
 function mergeProgress(a: Progress, b: Progress): Progress {
@@ -104,6 +135,9 @@ function mergeProgress(a: Progress, b: Progress): Progress {
   attempts.sort((x, y) => x.at - y.at)
   const aN = Object.keys(a.solved).length
   const bN = Object.keys(b.solved).length
+  const aAt = a.letterAt ?? 0
+  const bAt = b.letterAt ?? 0
+  const letter = bAt >= aAt ? (b.letter ?? a.letter ?? DEFAULT_LETTER) : (a.letter ?? b.letter ?? DEFAULT_LETTER)
   return {
     unlocked: a.unlocked || b.unlocked,
     started: a.started || b.started,
@@ -111,6 +145,8 @@ function mergeProgress(a: Progress, b: Progress): Progress {
     solved,
     misses,
     attempts,
+    letter,
+    letterAt: Math.max(aAt, bAt),
     updatedAt: Math.max(a.updatedAt ?? 0, b.updatedAt ?? 0),
   }
 }
@@ -125,6 +161,8 @@ function asProgress(raw: Partial<Progress> | null | undefined): Progress {
     solved: raw.solved ?? {},
     misses: raw.misses ?? {},
     attempts: Array.isArray(raw.attempts) ? raw.attempts : [],
+    letter: typeof raw.letter === 'string' ? raw.letter : DEFAULT_LETTER,
+    letterAt: raw.letterAt ?? 0,
     updatedAt: raw.updatedAt ?? 0,
   }
 }
@@ -629,26 +667,24 @@ function CharacterSlot({ place = 'right', small, src }: { place?: 'center' | 'ri
   )
 }
 
-const LETTER_KEY = 'birthday-love-letter'
-const DEFAULT_LETTER = '오빠 생일 축하해 ㅎㅎ 그냥 돈만 딸랑 주긴 좀 그래서 이런 프로그램 만들어봤는데 마음에 들었으면 좋겠다. 모든 문제를 다 맞혔으면 더 좋고 그건 오빠가 나에 대해 많이 안다는거니까 ㅎㅎ 항상 내 옆에 있어줘서 고맙고 힘이 되어 줘서 고마워. 함께 할수록 더더욱 함께 있어야할 이유가 생기는 것 같아. 오빠랑 있으면 너무 행복하거든. 우리 꼭 내년 생일도 함께 보냈으면 좋겠다. 사랑해 김영욱'
-
-function loadLetter(): string {
-  try {
-    const saved = localStorage.getItem(LETTER_KEY)
-    if (saved && saved.trim()) return saved
-  } catch { /* ignore */ }
-  return DEFAULT_LETTER
-}
-
-function LoveLetter({ opened, onOpen, onGift }: { opened: boolean; onOpen: () => void; onGift: () => void }) {
-  const saved = loadLetter()
-  const [text, setText] = useState(saved)
-  const [draft, setDraft] = useState(saved)
+function LoveLetter({
+  opened, text, onChange, onOpen, onGift,
+}: {
+  opened: boolean
+  text: string
+  onChange: (next: string) => void
+  onOpen: () => void
+  onGift: () => void
+}) {
+  const [draft, setDraft] = useState(text)
   const [editing, setEditing] = useState(false)
 
+  useEffect(() => {
+    if (!editing) setDraft(text)
+  }, [text, editing])
+
   const save = () => {
-    localStorage.setItem(LETTER_KEY, draft)
-    setText(draft)
+    onChange(draft)
     setEditing(false)
   }
 
@@ -674,12 +710,23 @@ function LoveLetter({ opened, onOpen, onGift }: { opened: boolean; onOpen: () =>
           >
             편지 열기 · +{LETTER_REWARD.toLocaleString()}원
           </button>
+          <button
+            type="button"
+            onClick={() => { setDraft(text); setEditing(true) }}
+            className="mt-3 text-red-300 hover:text-red-500 text-xs cursor-pointer"
+          >
+            편지 고치기
+          </button>
         </div>
       ) : editing ? (
         <>
           <textarea
             value={draft}
-            onChange={e => setDraft(e.target.value)}
+            onChange={e => {
+              const next = e.target.value
+              setDraft(next)
+              onChange(next)
+            }}
             placeholder={'오빠에게,\n\n여기에 편지를 써 줘.'}
             className="w-full min-h-[140px] resize-y rounded-lg px-3 py-2 text-sm leading-relaxed"
             style={{
@@ -902,6 +949,10 @@ export default function App() {
   const [poppingMoney, setPoppingMoney] = useState(false)
   const [showFinal, setShowFinal] = useState(false)
   const [room, setRoom] = useState<RoomId>(boot.room)
+  const [letter, setLetter] = useState(boot.letter ?? DEFAULT_LETTER)
+  const [letterAt, setLetterAt] = useState(boot.letterAt ?? 0)
+  const letterAtRef = useRef(letterAt)
+  letterAtRef.current = letterAt
   const [narration, setNarration] = useState('이곳에서의 첫만남 기억해?')
 
   const quests = QUESTS
@@ -920,8 +971,10 @@ export default function App() {
     solved: Object.fromEntries(solved),
     misses: Object.fromEntries(misses),
     attempts,
+    letter,
+    letterAt,
     updatedAt: Date.now(),
-  }), [unlocked, started, room, solved, misses, attempts])
+  }), [unlocked, started, room, solved, misses, attempts, letter, letterAt])
 
   const applyCloud = useCallback((remote: Progress) => {
     applyingRemote.current = true
@@ -950,6 +1003,10 @@ export default function App() {
       if (extra.length === 0) return prev
       return [...prev, ...extra].sort((a, b) => a.at - b.at)
     })
+    if (typeof remote.letter === 'string' && (remote.letterAt ?? 0) > letterAtRef.current) {
+      setLetter(remote.letter)
+      setLetterAt(remote.letterAt ?? 0)
+    }
     queueMicrotask(() => { applyingRemote.current = false })
   }, [])
 
@@ -967,7 +1024,7 @@ export default function App() {
       if (!remote) return
       applyCloud(remote)
     }
-    const id = setInterval(tick, 4000)
+    const id = setInterval(tick, 1500)
     return () => clearInterval(id)
   }, [unlocked, applyCloud])
 
@@ -1043,7 +1100,7 @@ export default function App() {
     setShowFinal(false)
     setActive(null)
     setInvite('')
-    persistProgress(emptyProgress())
+    persistProgress({ ...emptyProgress(), letter, letterAt })
     try { localStorage.removeItem(SAVE_KEY) } catch { /* ignore */ }
     try { document.cookie = `${SAVE_KEY}=;max-age=0;path=/;SameSite=Lax` } catch { /* ignore */ }
     try {
@@ -1327,6 +1384,11 @@ export default function App() {
         {room === 'exit' ? (
           <LoveLetter
             opened={solved.has(LETTER_ID)}
+            text={letter}
+            onChange={next => {
+              setLetter(next)
+              setLetterAt(Date.now())
+            }}
             onOpen={handleOpenLetter}
             onGift={()=>setShowFinal(true)}
           />
