@@ -149,24 +149,29 @@ const QUESTS: Quest[] = [
 
   { id:'k1', tier:'hidden', room:'vault', title:'퀴즈 1', subtitle:'',
     object:'자물쇠', inspect:'',
-    x:18, y:42, baseReward:25000,
-    question:'', hint:'', answers:[], emoji:'🔒' },
+    x:12, y:48, baseReward:25000,
+    question:'내가 맨날 쓰는 수달 이모티콘의 수달 이름은?', hint:'',
+    answers:['수콩'], emoji:'🔒' },
   { id:'k2', tier:'hidden', room:'vault', title:'퀴즈 2', subtitle:'',
     object:'자물쇠', inspect:'',
-    x:38, y:68, baseReward:25000,
-    question:'', hint:'', answers:[], emoji:'🔒' },
+    x:52, y:60, baseReward:25000,
+    question:'내가 예전에 팬덤까지 가입한 걸그룹 이름은? 초중딩때임. 말한적있으니 잘 생각해봐 ㅎㅎ', hint:'힌트는 네글자',
+    answers:['오마이걸'], emoji:'🔒' },
   { id:'k3', tier:'hidden', room:'vault', title:'퀴즈 3', subtitle:'',
     object:'자물쇠', inspect:'',
-    x:62, y:30, baseReward:25000,
-    question:'', hint:'', answers:[], emoji:'🔒' },
+    x:52, y:6, baseReward:25000,
+    question:'내가 맨날 듣는 노래의 걸그룹 이름은?', hint:'오빠도 좋아함',
+    answers:['리센느'], emoji:'🔒' },
   { id:'k4', tier:'hidden', room:'vault', title:'퀴즈 4', subtitle:'',
     object:'자물쇠', inspect:'',
-    x:82, y:58, baseReward:25000,
-    question:'', hint:'', answers:[], emoji:'🔒' },
+    x:68, y:62, baseReward:25000,
+    question:'내가 요즘 푹 빠진 캐릭터 이름은?', hint:'치',
+    answers:['치이카와'], emoji:'🔒' },
   { id:'k5', tier:'hidden', room:'vault', title:'퀴즈 5', subtitle:'',
     object:'자물쇠', inspect:'',
-    x:28, y:22, baseReward:25000,
-    question:'', hint:'', answers:[], emoji:'🔒' },
+    x:32, y:28, baseReward:25000,
+    question:'설윤이 예뻐 내가 예뻐? 솔직히?', hint:'',
+    answers:['나','이채윤','너'], emoji:'🔒' },
 
 ]
 
@@ -637,13 +642,14 @@ function CharacterSlot({ place = 'right', small, src }: { place?: 'center' | 'ri
 const POS_KEY = 'birthday-icon-positions'
 const EDIT_KEY = 'birthday-quest-edits'
 const LETTER_KEY = 'birthday-love-letter'
+const DEFAULT_LETTER = '오빠 생일 축하해 ㅎㅎ 그냥 돈만 딸랑 주긴 좀 그래서 이런 프로그램 만들어봤는데 마음에 들었으면 좋겠다. 모든 문제를 다 맞혔으면 더 좋고 그건 오빠가 나에 대해 많이 안다는거니까 ㅎㅎ 항상 내 옆에 있어줘서 고맙고 힘이 되어 줘서 고마워. 함께 할수록 더더욱 함께 있어야할 이유가 생기는 것 같아. 오빠랑 있으면 너무 행복하거든. 우리 꼭 내년 생일도 함께 보냈으면 좋겠다. 사랑해 김영욱'
 
 function loadLetter(): string {
   try {
-    return localStorage.getItem(LETTER_KEY) ?? ''
-  } catch {
-    return ''
-  }
+    const saved = localStorage.getItem(LETTER_KEY)
+    if (saved && saved.trim()) return saved
+  } catch { /* ignore */ }
+  return DEFAULT_LETTER
 }
 
 function LoveLetter({ onGift }: { onGift: () => void }) {
