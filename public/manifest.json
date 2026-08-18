@@ -1,0 +1,16 @@
+{
+  "name": "생일 방탈출",
+  "short_name": "생일방탈출",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#dc2626",
+  "icons": [
+    {
+      "src": "/character-girl.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
