@@ -49,6 +49,7 @@ const LETTER_REWARD = 5000
 const INVITE_CODE = '050821'
 const RESET_PIN = '061012'
 const SAVE_KEY = 'birthday-progress'
+const SAVE_BAK = 'birthday-progress-bak'
 const LETTER_KEY = 'birthday-love-letter'
 const DEFAULT_LETTER = '오빠 생일 축하해 ㅎㅎ 그냥 돈만 딸랑 주긴 좀 그래서 이런 프로그램 만들어봤는데 마음에 들었으면 좋겠다. 모든 문제를 다 맞혔으면 더 좋고 그건 오빠가 나에 대해 많이 안다는거니까 ㅎㅎ 항상 내 옆에 있어줘서 고맙고 힘이 되어 줘서 고마워. 함께 할수록 더더욱 함께 있어야할 이유가 생기는 것 같아. 오빠랑 있으면 너무 행복하거든. 우리 꼭 내년 생일도 함께 보냈으면 좋겠다. 사랑해 김영욱'
 
@@ -82,38 +83,53 @@ function readCookie(name: string): string | null {
   return null
 }
 
-function loadProgress(): Progress {
+function progressWeight(p: Progress) {
+  return Object.keys(p.solved).length + p.attempts.length + (p.unlocked ? 1 : 0)
+}
+
+function isHollow(p: Progress) {
+  return Object.keys(p.solved).length === 0 && p.attempts.length === 0 && !(p.letterAt)
+}
+
+function readJson(raw: string | null): Partial<Progress> | null {
+  if (!raw) return null
   try {
-    const raw = localStorage.getItem(SAVE_KEY) || readCookie(SAVE_KEY)
-    const p = raw ? JSON.parse(raw) as Partial<Progress> : {}
-    const legacy = typeof p.letter !== 'string' ? readLegacyLetter() : null
-    return {
-      ...emptyProgress(),
-      ...p,
-      solved: p.solved ?? {},
-      misses: p.misses ?? {},
-      attempts: Array.isArray(p.attempts) ? p.attempts : [],
-      letter: typeof p.letter === 'string' ? p.letter : (legacy ?? DEFAULT_LETTER),
-      letterAt: typeof p.letter === 'string' ? (p.letterAt ?? 0) : (legacy ? Date.now() : 0),
-    }
+    return JSON.parse(raw) as Partial<Progress>
   } catch {
-    const legacy = readLegacyLetter()
-    return {
-      ...emptyProgress(),
-      letter: legacy ?? DEFAULT_LETTER,
-      letterAt: legacy ? Date.now() : 0,
-    }
+    return null
   }
 }
 
-function persistProgress(p: Progress) {
-  const raw = JSON.stringify(p)
+function loadProgress(): Progress {
+  const pieces: Progress[] = []
+  try { pieces.push(asProgress(readJson(localStorage.getItem(SAVE_KEY)))) } catch { /* ignore */ }
+  try { pieces.push(asProgress(readJson(localStorage.getItem(SAVE_BAK)))) } catch { /* ignore */ }
+  try { pieces.push(asProgress(readJson(readCookie(SAVE_KEY)))) } catch { /* ignore */ }
+  const filled = pieces.filter(p => !isHollow(p) || (p.letter && p.letter !== DEFAULT_LETTER))
+  const base = filled.length ? filled.reduce((a, b) => mergeProgress(a, b)) : emptyProgress()
+  if (typeof base.letter !== 'string' || base.letter === DEFAULT_LETTER) {
+    const legacy = readLegacyLetter()
+    if (legacy) {
+      return { ...base, letter: legacy, letterAt: base.letterAt || Date.now() }
+    }
+  }
+  return base
+}
+
+function persistProgress(p: Progress, replace = false) {
+  const next = replace ? p : mergeProgress(loadProgress(), p)
+  const raw = JSON.stringify(next)
   try { localStorage.setItem(SAVE_KEY, raw) } catch { /* ignore */ }
   try {
-    document.cookie = `${SAVE_KEY}=${encodeURIComponent(raw)};max-age=31536000;path=/;SameSite=Lax`
-  } catch { /* ignore */ }
-  if (typeof p.letter === 'string') {
-    try { localStorage.setItem(LETTER_KEY, p.letter) } catch { /* ignore */ }
+    const bak = asProgress(readJson(localStorage.getItem(SAVE_BAK)))
+    if (replace || isHollow(bak) || progressWeight(next) >= progressWeight(bak)) {
+      localStorage.setItem(SAVE_BAK, raw)
+    }
+  } catch {
+    try { localStorage.setItem(SAVE_BAK, raw) } catch { /* ignore */ }
+  }
+  if (typeof next.letter === 'string') {
+    try { localStorage.setItem(LETTER_KEY, next.letter) } catch { /* ignore */ }
   }
 }
 
@@ -173,7 +189,10 @@ async function pullCloud(): Promise<Progress | null> {
     if (!r.ok) return null
     const all = await r.json() as Record<string, Partial<Progress>>
     const p = all[normCode(INVITE_CODE)]
-    return p ? asProgress(p) : null
+    if (!p) return null
+    const parsed = asProgress(p)
+    if (isHollow(parsed)) return null
+    return parsed
   } catch {
     return null
   }
@@ -181,8 +200,10 @@ async function pullCloud(): Promise<Progress | null> {
 
 async function pushCloud(p: Progress) {
   try {
+    if (isHollow(p)) return
     const remote = await pullCloud()
     const merged = remote ? mergeProgress(remote, p) : p
+    if (isHollow(merged)) return
     await fetch('/api/progress', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -978,7 +999,7 @@ export default function App() {
 
   const applyCloud = useCallback((remote: Progress) => {
     applyingRemote.current = true
-    setUnlocked(true)
+    if (remote.unlocked) setUnlocked(true)
     setRoom(prev => Object.keys(remote.solved).length ? remote.room : prev)
     setSolved(prev => {
       const merged = { ...Object.fromEntries(prev), ...remote.solved }
@@ -1009,6 +1030,13 @@ export default function App() {
     }
     queueMicrotask(() => { applyingRemote.current = false })
   }, [])
+
+  useEffect(() => {
+    const stored = loadProgress()
+    if (Object.keys(stored.solved).length === 0 && stored.attempts.length === 0) return
+    if (stored.started) setStarted(true)
+    applyCloud(stored)
+  }, [applyCloud])
 
   useEffect(() => {
     persistProgress(snapshot)
@@ -1100,8 +1128,11 @@ export default function App() {
     setShowFinal(false)
     setActive(null)
     setInvite('')
-    persistProgress({ ...emptyProgress(), letter, letterAt })
-    try { localStorage.removeItem(SAVE_KEY) } catch { /* ignore */ }
+    try {
+      localStorage.removeItem(SAVE_KEY)
+      localStorage.removeItem(SAVE_BAK)
+    } catch { /* ignore */ }
+    persistProgress({ ...emptyProgress(), letter, letterAt }, true)
     try { document.cookie = `${SAVE_KEY}=;max-age=0;path=/;SameSite=Lax` } catch { /* ignore */ }
     try {
       await fetch('/api/progress', {

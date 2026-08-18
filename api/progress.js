@@ -20,6 +20,10 @@ function writeStore(data) {
   } catch { /* ignore */ }
 }
 
+function isHollow(p) {
+  return Object.keys(p.solved || {}).length === 0 && !(p.attempts || []).length && !Number(p.letterAt || 0)
+}
+
 function mergeProgress(a = {}, b = {}) {
   const solved = { ...(a.solved || {}), ...(b.solved || {}) }
   const misses = { ...(a.misses || {}) }
@@ -82,7 +86,9 @@ export default function handler(req, res) {
     const cur = readStore()
     const next = { ...cur }
     for (const [k, v] of Object.entries(incoming)) {
-      next[k] = mergeProgress(cur[k] || {}, v)
+      const merged = mergeProgress(cur[k] || {}, v)
+      if (isHollow(merged) && !cur[k]) continue
+      next[k] = merged
     }
     writeStore(next)
     res.status(200).json(next)
