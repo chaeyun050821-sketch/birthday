@@ -2,8 +2,56 @@ import { defineConfig, type HtmlTagDescriptor, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'node:path'
+import fs from 'node:fs'
 
 import siteConfiguration from './.figma/make/site.json'
+
+function progressApiPlugin(): Plugin {
+  const file = path.resolve(__dirname, '.progress-store.json')
+  const read = () => {
+    try { return JSON.parse(fs.readFileSync(file, 'utf8')) as Record<string, unknown> }
+    catch { return {} }
+  }
+  const handle = (req: { url?: string; method?: string; on: (ev: string, cb: (c: Buffer) => void) => void }, res: { setHeader: (k: string, v: string) => void; statusCode: number; end: (s?: string) => void }, next: () => void) => {
+    const url = (req.url || '').split('?')[0]
+    if (url !== '/api/progress') return next()
+    res.setHeader('Access-Control-Allow-Origin', '*')
+    res.setHeader('Access-Control-Allow-Methods', 'GET,PUT,OPTIONS')
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+    if (req.method === 'OPTIONS') {
+      res.statusCode = 200
+      res.end()
+      return
+    }
+    if (req.method === 'GET') {
+      res.setHeader('Content-Type', 'application/json')
+      res.end(JSON.stringify(read()))
+      return
+    }
+    if (req.method === 'PUT') {
+      let body = ''
+      req.on('data', (c: Buffer) => { body += c.toString() })
+      req.on('end', () => {
+        const incoming = body ? JSON.parse(body) as Record<string, unknown> : {}
+        const nextStore = { ...read(), ...incoming }
+        fs.writeFileSync(file, JSON.stringify(nextStore))
+        res.setHeader('Content-Type', 'application/json')
+        res.end(JSON.stringify(nextStore))
+      })
+      return
+    }
+    next()
+  }
+  return {
+    name: 'progress-api',
+    configureServer(server) {
+      server.middlewares.use(handle as never)
+    },
+    configurePreviewServer(server) {
+      server.middlewares.use(handle as never)
+    },
+  }
+}
 
 // Vite config — https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -17,6 +65,7 @@ export default defineConfig(({ mode }) => {
       minify: !emitSourcemaps,
     },
     plugins: [
+      progressApiPlugin(),
       react(),
       tailwindcss(),
       figmaSiteConfiguration(siteConfiguration),

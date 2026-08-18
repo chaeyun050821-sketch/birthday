@@ -38,6 +38,7 @@ type Progress = {
   solved: Record<string, number>
   misses: Record<string, number>
   attempts: Attempt[]
+  updatedAt?: number
 }
 
 const HINT_PENALTY = 10000
@@ -79,6 +80,75 @@ function persistProgress(p: Progress) {
   try { localStorage.setItem(SAVE_KEY, raw) } catch { /* ignore */ }
   try {
     document.cookie = `${SAVE_KEY}=${encodeURIComponent(raw)};max-age=31536000;path=/;SameSite=Lax`
+  } catch { /* ignore */ }
+}
+
+function mergeProgress(a: Progress, b: Progress): Progress {
+  const solved = { ...a.solved, ...b.solved }
+  const misses = { ...a.misses }
+  for (const [id, n] of Object.entries(b.misses)) {
+    misses[id] = Math.max(misses[id] ?? 0, n)
+  }
+  const attempts = [...a.attempts]
+  const seen = new Set(attempts.map(t => `${t.id}:${t.at}:${t.input}`))
+  for (const t of b.attempts) {
+    const k = `${t.id}:${t.at}:${t.input}`
+    if (!seen.has(k)) {
+      seen.add(k)
+      attempts.push(t)
+    }
+  }
+  attempts.sort((x, y) => x.at - y.at)
+  const aN = Object.keys(a.solved).length
+  const bN = Object.keys(b.solved).length
+  return {
+    unlocked: a.unlocked || b.unlocked,
+    started: a.started || b.started,
+    room: bN >= aN ? b.room : a.room,
+    solved,
+    misses,
+    attempts,
+    updatedAt: Math.max(a.updatedAt ?? 0, b.updatedAt ?? 0),
+  }
+}
+
+function asProgress(raw: Partial<Progress> | null | undefined): Progress {
+  const base = emptyProgress()
+  if (!raw) return base
+  return {
+    ...base,
+    ...raw,
+    room: raw.room === 'clue' || raw.room === 'vault' || raw.room === 'exit' || raw.room === 'memory' ? raw.room : 'memory',
+    solved: raw.solved ?? {},
+    misses: raw.misses ?? {},
+    attempts: Array.isArray(raw.attempts) ? raw.attempts : [],
+    updatedAt: raw.updatedAt ?? 0,
+  }
+}
+
+async function pullCloud(): Promise<Progress | null> {
+  try {
+    const r = await fetch('/api/progress', { cache: 'no-store' })
+    if (!r.ok) return null
+    const all = await r.json() as Record<string, Partial<Progress>>
+    const p = all[normCode(INVITE_CODE)]
+    return p ? asProgress(p) : null
+  } catch {
+    return null
+  }
+}
+
+async function pushCloud(p: Progress) {
+  try {
+    const remote = await pullCloud()
+    const merged = remote ? mergeProgress(remote, p) : p
+    await fetch('/api/progress', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        [normCode(INVITE_CODE)]: { ...merged, unlocked: true, updatedAt: Date.now() },
+      }),
+    })
   } catch { /* ignore */ }
 }
 
@@ -805,6 +875,8 @@ export default function App() {
   const [attempts, setAttempts] = useState<Attempt[]>(boot.attempts)
   const [invite, setInvite] = useState('')
   const [inviteErr, setInviteErr] = useState(false)
+  const [syncing, setSyncing] = useState(false)
+  const applyingRemote = useRef(false)
   const [active, setActive] = useState<Quest|null>(null)
   const [coins, setCoins] = useState<Coin[]>([])
   const [poppingMoney, setPoppingMoney] = useState(false)
@@ -821,16 +893,63 @@ export default function App() {
   }, [misses])
   const allDone = quests.every(q => solved.has(q.id))
 
-  useEffect(() => {
-    persistProgress({
-      unlocked,
-      started,
-      room,
-      solved: Object.fromEntries(solved),
-      misses: Object.fromEntries(misses),
-      attempts,
+  const snapshot = useMemo((): Progress => ({
+    unlocked,
+    started,
+    room,
+    solved: Object.fromEntries(solved),
+    misses: Object.fromEntries(misses),
+    attempts,
+    updatedAt: Date.now(),
+  }), [unlocked, started, room, solved, misses, attempts])
+
+  const applyCloud = useCallback((remote: Progress) => {
+    applyingRemote.current = true
+    setUnlocked(true)
+    setRoom(prev => Object.keys(remote.solved).length ? remote.room : prev)
+    setSolved(prev => {
+      const merged = { ...Object.fromEntries(prev), ...remote.solved }
+      const same = prev.size === Object.keys(merged).length && [...prev].every(([k, v]) => merged[k] === v)
+      return same ? prev : new Map(Object.entries(merged))
     })
-  }, [unlocked, started, room, solved, misses, attempts])
+    setMisses(prev => {
+      const next = new Map(prev)
+      let changed = false
+      for (const [id, n] of Object.entries(remote.misses)) {
+        const v = Math.max(next.get(id) ?? 0, n)
+        if (v !== (next.get(id) ?? 0)) {
+          next.set(id, v)
+          changed = true
+        }
+      }
+      return changed ? next : prev
+    })
+    setAttempts(prev => {
+      const seen = new Set(prev.map(t => `${t.id}:${t.at}:${t.input}`))
+      const extra = remote.attempts.filter(t => !seen.has(`${t.id}:${t.at}:${t.input}`))
+      if (extra.length === 0) return prev
+      return [...prev, ...extra].sort((a, b) => a.at - b.at)
+    })
+    queueMicrotask(() => { applyingRemote.current = false })
+  }, [])
+
+  useEffect(() => {
+    persistProgress(snapshot)
+    if (!unlocked || applyingRemote.current) return
+    const t = setTimeout(() => { void pushCloud(snapshot) }, 400)
+    return () => clearTimeout(t)
+  }, [snapshot, unlocked])
+
+  useEffect(() => {
+    if (!unlocked) return
+    const tick = async () => {
+      const remote = await pullCloud()
+      if (!remote) return
+      applyCloud(remote)
+    }
+    const id = setInterval(tick, 4000)
+    return () => clearInterval(id)
+  }, [unlocked, applyCloud])
 
   const spawnCoins = useCallback((el: HTMLElement) => {
     const rect = el.getBoundingClientRect()
@@ -874,18 +993,23 @@ export default function App() {
     }])
   }, [])
 
-  const openDoor = () => {
-    if (unlocked) {
-      setStarted(true)
-      return
-    }
-    if (normCode(invite) !== normCode(INVITE_CODE)) {
-      setInviteErr(true)
-      return
+  const openDoor = async () => {
+    if (!unlocked) {
+      if (normCode(invite) !== normCode(INVITE_CODE)) {
+        setInviteErr(true)
+        return
+      }
     }
     setInviteErr(false)
+    setSyncing(true)
+    const remote = await pullCloud()
+    if (remote) applyCloud(remote)
+    const hasProgress = remote
+      ? Object.keys(remote.solved).length + remote.attempts.length > 0
+      : solved.size + attempts.length > 0
     setUnlocked(true)
-    setStarted(true)
+    setSyncing(false)
+    if (unlocked || !hasProgress) setStarted(true)
   }
 
   const othersDone = allDone
@@ -963,6 +1087,7 @@ export default function App() {
           {inviteErr && (
             <p className="text-red-500 text-xs font-bold mt-2">초대코드가 틀렸어</p>
           )}
+          <p className="text-gray-400 text-[11px] mt-2">같은 초대코드를 입력하면 진행상황이 같이 보여</p>
         </div>
       )}
 
@@ -989,11 +1114,12 @@ export default function App() {
       )}
 
       <button
-        onClick={openDoor}
-        className="pulse-red rounded-2xl px-10 py-4 font-black text-white text-lg cursor-pointer"
+        onClick={()=>{ void openDoor() }}
+        disabled={syncing}
+        className="pulse-red rounded-2xl px-10 py-4 font-black text-white text-lg cursor-pointer disabled:opacity-60"
         style={{background:'#dc2626'}}
       >
-        {unlocked ? '이어서 하기 →' : '문을 연다 →'}
+        {syncing ? '불러오는 중...' : unlocked ? '이어서 하기 →' : '문을 연다 →'}
       </button>
     </div>
   )
