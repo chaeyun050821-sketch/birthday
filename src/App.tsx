@@ -42,6 +42,8 @@ type Progress = {
 }
 
 const HINT_PENALTY = 10000
+const LETTER_ID = 'letter'
+const LETTER_REWARD = 5000
 const INVITE_CODE = '050821'
 const SAVE_KEY = 'birthday-progress'
 
@@ -159,59 +161,59 @@ function normCode(s: string) {
 const QUESTS: Quest[] = [
   { id:'w1', tier:'warmup', room:'memory', title:'달력', subtitle:'날짜가 동그라미 쳐져 있다',
     object:'달력', inspect:'벽에 걸린 달력. 어떤 날이 진하게 표시돼 있어.',
-    x:45.2, y:32.8, baseReward:25000,
+    x:45.2, y:32.8, baseReward:10000,
     question:'우리가 사귀게 된 날짜는? (8자리로 써 줘, YYYYMMDD)', hint:'이거 모르면 뒤지셈',
     answers:['20240308'], emoji:'🗓️' },
   { id:'w2', tier:'warmup', room:'memory', title:'영화 티켓', subtitle:'접힌 티켓 한 장',
     object:'티켓', inspect:'서랍에서 영화 티켓이 나왔다. 제목이 흐릿하다.',
-    x:94.0, y:57.3, baseReward:25000,
+    x:94.0, y:57.3, baseReward:10000,
     question:'우리가 처음 같이 본 영화는?', hint:'개노잼이라 잤음 😴',
     answers:['웡카','wonka','Wonka'], emoji:'🎬' },
   { id:'w3', tier:'warmup', room:'memory', title:'사진', subtitle:'그날의 장소',
     object:'액자', inspect:'액자 뒤에 쪽지가 숨겨져 있다.',
-    x:26.6, y:48.4, baseReward:25000,
+    x:26.6, y:48.4, baseReward:10000,
     question:'우리가 첫키스 한 장소는? (장소로 써 줘)', hint:'니가 먼저 했잖아',
     answers:['장재리'], emoji:'❤️' },
   { id:'w4', tier:'warmup', room:'memory', title:'핸드폰', subtitle:'카톡이 켜져 있다',
     object:'핸드폰', inspect:'오래된 카톡 창이 그대로 남아 있다. 첫 메시지가…',
-    x:60.8, y:56.8, baseReward:25000,
+    x:60.8, y:56.8, baseReward:10000,
     question:'오빠가 나한테 카톡으로 한 첫마디는?',
     hint:'한글자',
     answers:['ㅋ'], emoji:'💬' },
   { id:'w5', tier:'warmup', room:'memory', title:'베개', subtitle:'잠들기 전의 말',
     object:'베개', inspect:'베개 밑에 쪽지가 끼어 있다.',
-    x:85.0, y:10.7, baseReward:25000,
+    x:85.0, y:10.7, baseReward:10000,
     question:'오빠가 자기 전에 나한테 꼭 하는 말은?', hint:'내가 맨날 시킴',
     answers:['잘자 사랑해','사랑해 잘자','잘자사랑해','사랑해잘자','잘 자 사랑해','사랑해 잘 자'], emoji:'🌙' },
 
   { id:'m1', tier:'middle', room:'clue', title:'퀴즈 1', subtitle:'',
     object:'자물쇠', inspect:'',
-    x:6.0, y:60.2, baseReward:25000,
+    x:6.0, y:60.2, baseReward:20000,
     question:'내 한자 이름은? 한자로 써줘', hint:'쉽자나',
     answers:['李采潤'], emoji:'🔒' },
   { id:'m2', tier:'middle', room:'clue', title:'퀴즈 2', subtitle:'',
     object:'자물쇠', inspect:'',
-    x:56.9, y:58.1, baseReward:25000,
+    x:56.9, y:58.1, baseReward:20000,
     question:'무로 다닐 때 내 인생 최대 몸무게를 찍었는데 몇이게 ㅋ\n소수점까지 맞혀야함 ㅋ', hint:'힌트는 58 이상 59 이하',
     answers:['58.7'], emoji:'🔒' },
   { id:'m3', tier:'middle', room:'clue', title:'퀴즈 3', subtitle:'',
     object:'자물쇠', inspect:'',
-    x:73.0, y:63.0, baseReward:25000,
+    x:73.0, y:63.0, baseReward:20000,
     question:'내 세컨폰 아이폰 기종은? ㅋ', hint:'숫자 한개',
     answers:['6'], emoji:'🔒' },
   { id:'m4', tier:'middle', room:'clue', title:'퀴즈 4', subtitle:'',
     object:'자물쇠', inspect:'',
-    x:93.1, y:57.5, baseReward:25000,
+    x:93.1, y:57.5, baseReward:20000,
     question:'아빠 기일은? 이거 모르면 진짜... 0000으로 숫자로 써줘 (월,일)', hint:'ㅗ',
     answers:['0927','0928'], emoji:'🔒' },
   { id:'m5', tier:'middle', room:'clue', title:'퀴즈 5', subtitle:'',
     object:'자물쇠', inspect:'',
-    x:20.9, y:60.6, baseReward:25000,
+    x:20.9, y:60.6, baseReward:20000,
     question:'내 키는? 소수점까지는 안적어도 돼 ㅋ', hint:'이거 모르면 걍 죽어',
     answers:['158'], emoji:'🔒' },
   { id:'m6', tier:'middle', room:'clue', title:'퀴즈 6', subtitle:'',
     object:'자물쇠', inspect:'',
-    x:78.1, y:93.1, baseReward:25000,
+    x:78.1, y:93.1, baseReward:20000,
     question:'내 발사이즈는? (운동화 기준)', hint:'',
     answers:['240'], emoji:'🔒' },
 
@@ -637,11 +639,11 @@ function loadLetter(): string {
   return DEFAULT_LETTER
 }
 
-function LoveLetter({ onGift }: { onGift: () => void }) {
+function LoveLetter({ opened, onOpen, onGift }: { opened: boolean; onOpen: () => void; onGift: () => void }) {
   const saved = loadLetter()
   const [text, setText] = useState(saved)
   const [draft, setDraft] = useState(saved)
-  const [editing, setEditing] = useState(!saved.trim())
+  const [editing, setEditing] = useState(false)
 
   const save = () => {
     localStorage.setItem(LETTER_KEY, draft)
@@ -659,7 +661,20 @@ function LoveLetter({ onGift }: { onGift: () => void }) {
       }}
     >
       <p className="text-red-400 text-xs font-black tracking-widest mb-3">💌 편지</p>
-      {editing ? (
+      {!opened && !editing ? (
+        <div className="text-center py-4">
+          <div className="text-5xl mb-3">✉️</div>
+          <p className="text-gray-500 text-sm mb-4">아직 봉인이 그대로야</p>
+          <button
+            type="button"
+            onClick={onOpen}
+            className="w-full rounded-2xl py-3.5 font-black text-white text-base cursor-pointer pulse-red"
+            style={{ background: '#dc2626' }}
+          >
+            편지 열기 · +{LETTER_REWARD.toLocaleString()}원
+          </button>
+        </div>
+      ) : editing ? (
         <>
           <textarea
             value={draft}
@@ -692,6 +707,7 @@ function LoveLetter({ onGift }: { onGift: () => void }) {
           >
             {text.trim() ? text : '아직 편지가 없어.'}
           </p>
+          <p className="text-red-500 font-mono text-xs mt-3">+{LETTER_REWARD.toLocaleString()}원</p>
           <button
             type="button"
             onClick={() => { setDraft(text); setEditing(true) }}
@@ -699,16 +715,16 @@ function LoveLetter({ onGift }: { onGift: () => void }) {
           >
             편지 고치기
           </button>
+          <button
+            type="button"
+            onClick={onGift}
+            className="mt-4 w-full rounded-2xl py-3.5 font-black text-white text-base cursor-pointer pulse-red"
+            style={{ background: '#dc2626' }}
+          >
+            🎁 선물 받기
+          </button>
         </>
       )}
-      <button
-        type="button"
-        onClick={onGift}
-        className="mt-4 w-full rounded-2xl py-3.5 font-black text-white text-base cursor-pointer pulse-red"
-        style={{ background: '#dc2626' }}
-      >
-        🎁 선물 받기
-      </button>
     </div>
   )
 }
@@ -974,6 +990,14 @@ export default function App() {
     setTimeout(()=>{ setPoppingMoney(true); setTimeout(()=>setPoppingMoney(false), 450) }, 200)
   }, [spawnCoins, quests, solved])
 
+  const handleOpenLetter = useCallback(() => {
+    setSolved(prev => {
+      if (prev.has(LETTER_ID)) return prev
+      return new Map([...prev, [LETTER_ID, LETTER_REWARD]])
+    })
+    setTimeout(()=>{ setPoppingMoney(true); setTimeout(()=>setPoppingMoney(false), 450) }, 200)
+  }, [])
+
   const handleWrong = useCallback((id: string)=>{
     setMisses(prev => {
       const next = new Map(prev)
@@ -1095,7 +1119,7 @@ export default function App() {
         <div className="w-full max-w-sm mb-5 rounded-3xl border-2 border-red-100 bg-white p-5 text-left shadow-sm max-h-56 overflow-auto">
           <p className="text-red-500 font-black text-xs mb-1">풀이 기록</p>
           <p className="text-gray-400 text-xs mb-3">
-            맞춤 {solved.size} · 실패 {[...failedIds].length} · {earned.toLocaleString()}원
+            맞춤 {[...solved.keys()].filter(id => id !== LETTER_ID).length} · 실패 {[...failedIds].length} · {earned.toLocaleString()}원
           </p>
           <div className="space-y-2">
             {attempts.slice().reverse().map((a, i) => (
@@ -1198,7 +1222,11 @@ export default function App() {
         />
 
         {room === 'exit' ? (
-          <LoveLetter onGift={()=>setShowFinal(true)} />
+          <LoveLetter
+            opened={solved.has(LETTER_ID)}
+            onOpen={handleOpenLetter}
+            onGift={()=>setShowFinal(true)}
+          />
         ) : (
           <div className="mx-4 mt-3 rounded-xl bg-red-50/70 border border-red-100 px-4 py-3 min-h-[52px]">
             <p className="text-gray-600 text-sm leading-relaxed">{narration}</p>
