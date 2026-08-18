@@ -22,12 +22,6 @@ interface Quest {
   emoji: string
 }
 
-type QuestEdit = { question: string; answers: string[]; hint: string }
-
-const HINT_PENALTY = 10000
-const INVITE_CODE = '050821'
-const SAVE_KEY = 'birthday-progress'
-
 type Attempt = {
   id: string
   title: string
@@ -45,6 +39,10 @@ type Progress = {
   misses: Record<string, number>
   attempts: Attempt[]
 }
+
+const HINT_PENALTY = 10000
+const INVITE_CODE = '050821'
+const SAVE_KEY = 'birthday-progress'
 
 function emptyProgress(): Progress {
   return { unlocked: false, started: false, room: 'memory', solved: {}, misses: {}, attempts: [] }
@@ -91,85 +89,85 @@ function normCode(s: string) {
 const QUESTS: Quest[] = [
   { id:'w1', tier:'warmup', room:'memory', title:'달력', subtitle:'날짜가 동그라미 쳐져 있다',
     object:'달력', inspect:'벽에 걸린 달력. 어떤 날이 진하게 표시돼 있어.',
-    x:27, y:42, baseReward:25000,
+    x:45.2, y:32.8, baseReward:25000,
     question:'우리가 사귀게 된 날짜는? (8자리로 써 줘, YYYYMMDD)', hint:'이거 모르면 뒤지셈',
     answers:['20240308'], emoji:'🗓️' },
   { id:'w2', tier:'warmup', room:'memory', title:'영화 티켓', subtitle:'접힌 티켓 한 장',
     object:'티켓', inspect:'서랍에서 영화 티켓이 나왔다. 제목이 흐릿하다.',
-    x:10, y:72, baseReward:25000,
+    x:94.0, y:57.3, baseReward:25000,
     question:'우리가 처음 같이 본 영화는?', hint:'개노잼이라 잤음 😴',
     answers:['웡카','wonka','Wonka'], emoji:'🎬' },
   { id:'w3', tier:'warmup', room:'memory', title:'사진', subtitle:'그날의 장소',
     object:'액자', inspect:'액자 뒤에 쪽지가 숨겨져 있다.',
-    x:86, y:76, baseReward:25000,
+    x:26.6, y:48.4, baseReward:25000,
     question:'우리가 첫키스 한 장소는? (장소로 써 줘)', hint:'니가 먼저 했잖아',
     answers:['장재리'], emoji:'❤️' },
   { id:'w4', tier:'warmup', room:'memory', title:'핸드폰', subtitle:'카톡이 켜져 있다',
     object:'핸드폰', inspect:'오래된 카톡 창이 그대로 남아 있다. 첫 메시지가…',
-    x:58, y:52, baseReward:25000,
+    x:60.8, y:56.8, baseReward:25000,
     question:'오빠가 나한테 카톡으로 한 첫마디는?',
     hint:'한글자',
     answers:['ㅋ'], emoji:'💬' },
   { id:'w5', tier:'warmup', room:'memory', title:'베개', subtitle:'잠들기 전의 말',
     object:'베개', inspect:'베개 밑에 쪽지가 끼어 있다.',
-    x:38, y:6, baseReward:25000,
+    x:85.0, y:10.7, baseReward:25000,
     question:'오빠가 자기 전에 나한테 꼭 하는 말은?', hint:'내가 맨날 시킴',
     answers:['잘자 사랑해','사랑해 잘자','잘자사랑해','사랑해잘자','잘 자 사랑해','사랑해 잘 자'], emoji:'🌙' },
 
   { id:'m1', tier:'middle', room:'clue', title:'퀴즈 1', subtitle:'',
     object:'자물쇠', inspect:'',
-    x:24, y:52, baseReward:25000,
+    x:6.0, y:60.2, baseReward:25000,
     question:'내 한자 이름은? 한자로 써줘', hint:'쉽자나',
     answers:['李采潤'], emoji:'🔒' },
   { id:'m2', tier:'middle', room:'clue', title:'퀴즈 2', subtitle:'',
     object:'자물쇠', inspect:'',
-    x:52, y:32, baseReward:25000,
+    x:56.9, y:58.1, baseReward:25000,
     question:'무로 다닐 때 내 인생 최대 몸무게를 찍었는데 몇이게 ㅋ\n소수점까지 맞혀야함 ㅋ', hint:'힌트는 58 이상 59 이하',
     answers:['58.7'], emoji:'🔒' },
   { id:'m3', tier:'middle', room:'clue', title:'퀴즈 3', subtitle:'',
     object:'자물쇠', inspect:'',
-    x:76, y:48, baseReward:25000,
+    x:73.0, y:63.0, baseReward:25000,
     question:'내 세컨폰 아이폰 기종은? ㅋ', hint:'숫자 한개',
     answers:['6'], emoji:'🔒' },
   { id:'m4', tier:'middle', room:'clue', title:'퀴즈 4', subtitle:'',
     object:'자물쇠', inspect:'',
-    x:58, y:68, baseReward:25000,
+    x:93.1, y:57.5, baseReward:25000,
     question:'아빠 기일은? 이거 모르면 진짜... 0000으로 숫자로 써줘 (월,일)', hint:'ㅗ',
     answers:['0927','0928'], emoji:'🔒' },
   { id:'m5', tier:'middle', room:'clue', title:'퀴즈 5', subtitle:'',
     object:'자물쇠', inspect:'',
-    x:12, y:70, baseReward:25000,
+    x:20.9, y:60.6, baseReward:25000,
     question:'내 키는? 소수점까지는 안적어도 돼 ㅋ', hint:'이거 모르면 걍 죽어',
     answers:['158'], emoji:'🔒' },
   { id:'m6', tier:'middle', room:'clue', title:'퀴즈 6', subtitle:'',
     object:'자물쇠', inspect:'',
-    x:36, y:78, baseReward:25000,
+    x:78.1, y:93.1, baseReward:25000,
     question:'내 발사이즈는? (운동화 기준)', hint:'',
     answers:['240'], emoji:'🔒' },
 
   { id:'k1', tier:'hidden', room:'vault', title:'퀴즈 1', subtitle:'',
     object:'자물쇠', inspect:'',
-    x:12, y:48, baseReward:25000,
+    x:11.7, y:47.6, baseReward:25000,
     question:'내가 맨날 쓰는 수달 이모티콘의 수달 이름은?', hint:'',
     answers:['수콩'], emoji:'🔒' },
   { id:'k2', tier:'hidden', room:'vault', title:'퀴즈 2', subtitle:'',
     object:'자물쇠', inspect:'',
-    x:52, y:60, baseReward:25000,
+    x:51.9, y:59.8, baseReward:25000,
     question:'내가 예전에 팬덤까지 가입한 걸그룹 이름은? 초중딩때임. 말한적있으니 잘 생각해봐 ㅎㅎ', hint:'힌트는 네글자',
     answers:['오마이걸'], emoji:'🔒' },
   { id:'k3', tier:'hidden', room:'vault', title:'퀴즈 3', subtitle:'',
     object:'자물쇠', inspect:'',
-    x:52, y:6, baseReward:25000,
+    x:51.6, y:6.0, baseReward:25000,
     question:'내가 맨날 듣는 노래의 걸그룹 이름은?', hint:'오빠도 좋아함',
     answers:['리센느'], emoji:'🔒' },
   { id:'k4', tier:'hidden', room:'vault', title:'퀴즈 4', subtitle:'',
     object:'자물쇠', inspect:'',
-    x:68, y:62, baseReward:25000,
+    x:68.4, y:61.9, baseReward:25000,
     question:'내가 요즘 푹 빠진 캐릭터 이름은?', hint:'치',
     answers:['치이카와'], emoji:'🔒' },
   { id:'k5', tier:'hidden', room:'vault', title:'퀴즈 5', subtitle:'',
     object:'자물쇠', inspect:'',
-    x:32, y:28, baseReward:25000,
+    x:32.2, y:27.5, baseReward:25000,
     question:'설윤이 예뻐 내가 예뻐? 솔직히?', hint:'',
     answers:['나','이채윤','너'], emoji:'🔒' },
 
@@ -309,7 +307,7 @@ function HintButton({
 }
 
 function InspectModal({
-  quest, alreadySolved, alreadyFailed, missCount, earnedReward, onSolve, onWrong, onAttempt, onClose, onSave,
+  quest, alreadySolved, alreadyFailed, missCount, earnedReward, onSolve, onWrong, onAttempt, onClose,
 }: {
   quest: Quest
   alreadySolved?: boolean
@@ -320,14 +318,8 @@ function InspectModal({
   onWrong: (id: string) => void
   onAttempt: (q: Quest, input: string, correct: boolean) => void
   onClose: () => void
-  onSave: (id: string, edit: QuestEdit) => void
 }) {
   const cfg = TIER[quest.tier]
-  const needsSetup = !quest.question.trim() || quest.answers.length === 0
-  const [editing, setEditing] = useState(needsSetup)
-  const [draftQ, setDraftQ] = useState(quest.question)
-  const [draftA, setDraftA] = useState(quest.answers.join(', '))
-  const [draftH, setDraftH] = useState(quest.hint)
   const [input, setInput] = useState('')
   const [status, setStatus] = useState<'idle'|'wrong'|'correct'>('idle')
   const [hintUsed, setHintUsed] = useState(false)
@@ -336,18 +328,13 @@ function InspectModal({
   const shakeRef  = useRef<HTMLDivElement>(null)
   const inputRef  = useRef<HTMLInputElement>(null)
   const solveRef  = useRef<HTMLButtonElement>(null)
-  const qRef = useRef<HTMLTextAreaElement>(null)
   const [out, setOut] = useState(!!alreadyFailed)
   const noTries = out || missCount >= MAX_TRIES
 
   useEffect(()=>{
-    if (editing) {
-      setTimeout(()=>qRef.current?.focus(), 200)
-      return
-    }
     if (alreadySolved) return
     setTimeout(()=>inputRef.current?.focus(), 200)
-  }, [alreadySolved, editing])
+  }, [alreadySolved])
 
   useEffect(()=>{
     if (timeLeft===null || status==='correct' || timedOut) return
@@ -412,62 +399,6 @@ function InspectModal({
         </div>
 
         <div className="px-6 py-5">
-          {editing ? (
-            <div>
-              <p className="text-red-500 font-black text-sm mb-4">질문과 정답을 적어 줘</p>
-              <label className="block text-xs font-bold text-gray-500 mb-1">질문</label>
-              <textarea
-                ref={qRef}
-                className="w-full rounded-xl px-4 py-3 text-sm mb-3 resize-none"
-                style={{ background:'#fffafa', border:'1.5px solid #fecaca', color:'#1f2937', outline:'none' }}
-                rows={3}
-                placeholder="예: 우리가 처음 만난 곳은?"
-                value={draftQ}
-                onChange={e=>setDraftQ(e.target.value)}
-              />
-              <label className="block text-xs font-bold text-gray-500 mb-1">정답</label>
-              <input
-                className="w-full rounded-xl px-4 py-3 text-sm mb-1"
-                style={{ background:'#fffafa', border:'1.5px solid #fecaca', color:'#1f2937', outline:'none' }}
-                type="text"
-                placeholder="여러 개면 쉼표로 구분해"
-                value={draftA}
-                onChange={e=>setDraftA(e.target.value)}
-              />
-              <p className="text-gray-400 text-[11px] mb-3">예: 무로, muro</p>
-              <label className="block text-xs font-bold text-gray-500 mb-1">힌트 (선택)</label>
-              <input
-                className="w-full rounded-xl px-4 py-3 text-sm mb-5"
-                style={{ background:'#ffffff', border:'1.5px solid #e5e7eb', color:'#1f2937', outline:'none' }}
-                type="text"
-                placeholder="몰라도 괜찮아"
-                value={draftH}
-                onChange={e=>setDraftH(e.target.value)}
-              />
-              <button
-                onClick={()=>{
-                  const answers = parseAnswers(draftA)
-                  if (!draftQ.trim() || answers.length === 0) return
-                  onSave(quest.id, { question: draftQ.trim(), answers, hint: draftH.trim() })
-                  setEditing(false)
-                }}
-                disabled={!draftQ.trim() || !draftA.trim()}
-                className="w-full rounded-xl py-3 font-black text-sm cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
-                style={{ background:'#dc2626', color:'#fff' }}
-              >
-                저장하기
-              </button>
-              {!needsSetup && (
-                <button
-                  onClick={()=>setEditing(false)}
-                  className="w-full mt-2 text-gray-400 hover:text-red-500 text-sm cursor-pointer"
-                >
-                  취소
-                </button>
-              )}
-            </div>
-          ) : (
-          <>
           {timeLeft!==null && (
             <div className="mb-4">
               <div className="flex justify-between items-center mb-1">
@@ -512,12 +443,6 @@ function InspectModal({
                 style={{ background:'#dc2626', color:'#fff' }}
               >
                 닫기
-              </button>
-              <button
-                onClick={()=>setEditing(true)}
-                className="w-full mt-3 text-gray-400 hover:text-red-500 text-xs cursor-pointer"
-              >
-                질문 바꾸기
               </button>
             </div>
           ) : noTries ? (
@@ -596,15 +521,7 @@ function InspectModal({
                 disabled={noTries}
               />
               )}
-              <button
-                onClick={()=>setEditing(true)}
-                className="w-full mt-3 text-gray-400 hover:text-red-500 text-xs cursor-pointer"
-              >
-                질문 바꾸기
-              </button>
             </>
-          )}
-          </>
           )}
         </div>
       </div>
@@ -639,8 +556,6 @@ function CharacterSlot({ place = 'right', small, src }: { place?: 'center' | 'ri
   )
 }
 
-const POS_KEY = 'birthday-icon-positions'
-const EDIT_KEY = 'birthday-quest-edits'
 const LETTER_KEY = 'birthday-love-letter'
 const DEFAULT_LETTER = '오빠 생일 축하해 ㅎㅎ 그냥 돈만 딸랑 주긴 좀 그래서 이런 프로그램 만들어봤는데 마음에 들었으면 좋겠다. 모든 문제를 다 맞혔으면 더 좋고 그건 오빠가 나에 대해 많이 안다는거니까 ㅎㅎ 항상 내 옆에 있어줘서 고맙고 힘이 되어 줘서 고마워. 함께 할수록 더더욱 함께 있어야할 이유가 생기는 것 같아. 오빠랑 있으면 너무 행복하거든. 우리 꼭 내년 생일도 함께 보냈으면 좋겠다. 사랑해 김영욱'
 
@@ -728,36 +643,14 @@ function LoveLetter({ onGift }: { onGift: () => void }) {
   )
 }
 
-function loadPositions(): Record<string, { x: number; y: number }> {
-  try {
-    return JSON.parse(localStorage.getItem(POS_KEY) || '{}') as Record<string, { x: number; y: number }>
-  } catch {
-    return {}
-  }
-}
-
-function loadQuestEdits(): Record<string, QuestEdit> {
-  try {
-    return JSON.parse(localStorage.getItem(EDIT_KEY) || '{}') as Record<string, QuestEdit>
-  } catch {
-    return {}
-  }
-}
-
-function parseAnswers(raw: string): string[] {
-  return raw.split(/[,/，\n]/).map(s => s.trim()).filter(Boolean)
-}
-
 function RoomView({
-  room, quests, solved, lockedIds, gameOver, positions, onMove, onInspect,
+  room, quests, solved, lockedIds, gameOver, onInspect,
 }: {
   room: RoomId
   quests: Quest[]
   solved: Map<string, number>
   lockedIds: Set<string>
   gameOver: boolean
-  positions: Record<string, { x: number; y: number }>
-  onMove: (id: string, x: number, y: number) => void
   onInspect: (q: Quest) => void
 }) {
   const palettes: Record<RoomId, { wall: string; floor: string; accent: string }> = {
@@ -773,22 +666,6 @@ function RoomView({
   const isExit = room === 'exit'
   const photoBg = isMuro ? '/rooms/muro.png?v=2' : isHome ? '/rooms/home.png?v=3' : isKaraoke ? '/rooms/karaoke.png' : isExit ? '/rooms/love.png' : null
   const roomRef = useRef<HTMLDivElement>(null)
-  const drag = useRef<{
-    id: string
-    startX: number
-    startY: number
-    moved: boolean
-  } | null>(null)
-
-  const posOf = (q: Quest) => positions[q.id] ?? { x: q.x, y: q.y }
-
-  const toPct = (clientX: number, clientY: number) => {
-    const rect = roomRef.current!.getBoundingClientRect()
-    return {
-      x: Math.min(96, Math.max(4, ((clientX - rect.left) / rect.width) * 100)),
-      y: Math.min(96, Math.max(4, ((clientY - rect.top) / rect.height) * 100)),
-    }
-  }
 
   return (
     <div
@@ -813,39 +690,18 @@ function RoomView({
       {quests.map(q=>{
         const done = solved.has(q.id)
         const locked = !done && (lockedIds.has(q.id) || gameOver)
-        const pos = posOf(q)
         return (
           <button
             key={q.id}
             type="button"
-            className="absolute z-30 flex items-center justify-center cursor-grab active:cursor-grabbing touch-none"
+            className="absolute z-30 flex items-center justify-center cursor-pointer"
             style={{
-              left:`${pos.x}%`,
-              top:`${pos.y}%`,
+              left:`${q.x}%`,
+              top:`${q.y}%`,
               transform:'translate(-50%,-50%)',
             }}
             aria-label={done ? '정답 다시 보기' : '조사'}
-            onPointerDown={e=>{
-              e.preventDefault()
-              e.currentTarget.setPointerCapture(e.pointerId)
-              drag.current = { id:q.id, startX:e.clientX, startY:e.clientY, moved:false }
-            }}
-            onPointerMove={e=>{
-              if (!drag.current || drag.current.id !== q.id) return
-              const dx = e.clientX - drag.current.startX
-              const dy = e.clientY - drag.current.startY
-              if (!drag.current.moved && dx * dx + dy * dy < 64) return
-              drag.current.moved = true
-              const next = toPct(e.clientX, e.clientY)
-              onMove(q.id, next.x, next.y)
-            }}
-            onPointerUp={()=>{
-              const d = drag.current
-              drag.current = null
-              if (!d || d.id !== q.id) return
-              if (!d.moved && !locked) onInspect(q)
-            }}
-            onPointerCancel={()=>{ drag.current = null }}
+            onClick={()=>{ if (!locked) onInspect(q) }}
           >
             <span
               className={`text-3xl ${(done ? '🔓' : locked ? '🔒' : q.emoji) === '🔒' ? '' : 'drop-shadow-[0_2px_6px_rgba(0,0,0,0.7)]'}`}
@@ -955,31 +811,8 @@ export default function App() {
   const [showFinal, setShowFinal] = useState(false)
   const [room, setRoom] = useState<RoomId>(boot.room)
   const [narration, setNarration] = useState('이곳에서의 첫만남 기억해?')
-  const [positions, setPositions] = useState<Record<string, { x: number; y: number }>>(loadPositions)
-  const [questEdits, setQuestEdits] = useState<Record<string, QuestEdit>>(loadQuestEdits)
 
-  const quests = useMemo(
-    () => QUESTS.map(q => questEdits[q.id] ? { ...q, ...questEdits[q.id] } : q),
-    [questEdits],
-  )
-
-  const handleMove = useCallback((id: string, x: number, y: number) => {
-    setPositions(prev => {
-      const next = { ...prev, [id]: { x, y } }
-      localStorage.setItem(POS_KEY, JSON.stringify(next))
-      return next
-    })
-  }, [])
-
-  const handleSaveQuest = useCallback((id: string, edit: QuestEdit) => {
-    setQuestEdits(prev => {
-      const next = { ...prev, [id]: edit }
-      localStorage.setItem(EDIT_KEY, JSON.stringify(next))
-      return next
-    })
-    setActive(prev => prev && prev.id === id ? { ...prev, ...edit } : prev)
-  }, [])
-
+  const quests = QUESTS
   const earned = useMemo(()=>[...solved.values()].reduce((s,v)=>s+v,0), [solved])
   const failedIds = useMemo(() => {
     const s = new Set<string>()
@@ -1180,7 +1013,6 @@ export default function App() {
           onWrong={handleWrong}
           onAttempt={handleAttempt}
           onClose={()=>setActive(null)}
-          onSave={handleSaveQuest}
         />
       )}
       {showFinal && <FinalScreen earned={earned} onClose={()=>setShowFinal(false)} />}
@@ -1234,8 +1066,6 @@ export default function App() {
           solved={solved}
           lockedIds={lockedIds}
           gameOver={false}
-          positions={positions}
-          onMove={handleMove}
           onInspect={q=>{
             setActive(q)
           }}
