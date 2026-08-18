@@ -1207,12 +1207,7 @@ export default function App() {
       className="min-h-screen flex flex-col items-center justify-center px-6 text-center"
       style={{ background:'radial-gradient(ellipse at center, #fff1f2 0%, #ffffff 70%)' }}
     >
-      <img
-        src="/app-icon.png"
-        alt="생일 방탈출"
-        className="w-44 h-auto mb-5 select-none"
-        draggable={false}
-      />
+      <div className="text-7xl mb-5">🎂</div>
       <h1 className="shimmer-red text-4xl font-black mb-1 tracking-tight">생일 방탈출</h1>
       <p className="text-red-400 font-mono text-xs mb-8">마운자로 값 벌자 ㅋ</p>
 
