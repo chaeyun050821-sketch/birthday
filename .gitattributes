@@ -148,4 +148,5 @@
 # Keep game sprites in-repo without LFS (Vercel builds skip Git LFS by default)
 public/character.png -filter -diff -merge
 public/character-girl.png -filter -diff -merge
+public/app-icon.png -filter -diff -merge
 public/rooms/*.png -filter -diff -merge
