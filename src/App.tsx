@@ -51,7 +51,17 @@ const RESET_PIN = '061012'
 const SAVE_KEY = 'birthday-progress'
 const SAVE_BAK = 'birthday-progress-bak'
 const LETTER_KEY = 'birthday-love-letter'
-const DEFAULT_LETTER = '오빠 생일 축하해 ㅎㅎ 그냥 돈만 딸랑 주긴 좀 그래서 이런 프로그램 만들어봤는데 마음에 들었으면 좋겠다. 모든 문제를 다 맞혔으면 더 좋고 그건 오빠가 나에 대해 많이 안다는거니까 ㅎㅎ 항상 내 옆에 있어줘서 고맙고 힘이 되어 줘서 고마워. 함께 할수록 더더욱 함께 있어야할 이유가 생기는 것 같아. 오빠랑 있으면 너무 행복하거든. 우리 꼭 내년 생일도 함께 보냈으면 좋겠다. 사랑해 김영욱'
+const OLD_DEFAULT_LETTER = '오빠 생일 축하해 ㅎㅎ 그냥 돈만 딸랑 주긴 좀 그래서 이런 프로그램 만들어봤는데 마음에 들었으면 좋겠다. 모든 문제를 다 맞혔으면 더 좋고 그건 오빠가 나에 대해 많이 안다는거니까 ㅎㅎ 항상 내 옆에 있어줘서 고맙고 힘이 되어 줘서 고마워. 함께 할수록 더더욱 함께 있어야할 이유가 생기는 것 같아. 오빠랑 있으면 너무 행복하거든. 우리 꼭 내년 생일도 함께 보냈으면 좋겠다. 사랑해 김영욱'
+const DEFAULT_LETTER = `오빠 생일 진짜 축하해 ㅎㅎ ❤️
+그냥 돈만 딸랑 주기는 뭔가 아쉬워서, 이번에는 오빠한테 조금이라도 특별한 선물을 해주고 싶어서 이렇게 프로그램도 만들어봤어. 내가 만든 거니까 오빠가 하나하나 풀어보면서 웃었으면 좋겠다 ㅎㅎ 모든 문제를 다 맞히면 더 좋겠지만, 사실 몇 개를 맞히는지보다 오빠가 이걸 풀면서 ‘내가 얘를 정말 많이 알고 있구나’ 하고 느꼈으면 좋겠어. 그리고 혹시 틀리는 문제가 있더라도 괜찮아. 앞으로도 같이 지내면서 내가 좋아하는 것, 싫어하는 것, 사소한 습관들까지 하나씩 더 알아가면 되니까 ㅎㅎ 항상 내 옆에 있어줘서 고마워. 내가 힘들 때마다 내 편이 되어주고, 별거 아닌 순간에도 나를 행복하게 만들어줘서 정말 고마워. 오빠랑 함께하는 시간이 쌓일수록 ‘앞으로도 계속 이 사람이랑 함께하고 싶다’는 생각이 더 커지는 것 같아. 오빠랑 있으면 그냥 너무 행복해. 특별한 걸 하지 않아도 같이 밥 먹고, 얘기하고, 장난치고, 아무것도 안 하고 같이 있는 그 시간들까지 다 좋아. 그래서 오빠의 올해 생일도 내가 함께할 수 있어서 너무 좋고, 내년 생일에도, 그다음 생일에도 계속 옆에서 축하해주고 싶어. 앞으로도 지금처럼 서로에게 좋은 사람이 되어주면서 오래오래 함께했으면 좋겠다.
+태어나줘서 고맙고, 내 옆에 와줘서 고마워.
+오빠의 서른한번째 생일을 진심으로 축하해 ❤️
+사랑해 김영욱!! ❤️
+오늘은 세상에서 제일 행복한 하루 보내자 ㅎㅎ`
+
+function isPlaceholderLetter(s: string | undefined) {
+  return !s || !s.trim() || s === OLD_DEFAULT_LETTER
+}
 
 function readLegacyLetter(): string | null {
   try {
@@ -107,13 +117,13 @@ function loadProgress(): Progress {
   try { pieces.push(asProgress(readJson(readCookie(SAVE_KEY)))) } catch { /* ignore */ }
   const filled = pieces.filter(p => !isHollow(p) || (p.letter && p.letter !== DEFAULT_LETTER))
   const base = filled.length ? filled.reduce((a, b) => mergeProgress(a, b)) : emptyProgress()
-  if (typeof base.letter !== 'string' || base.letter === DEFAULT_LETTER) {
-    const legacy = readLegacyLetter()
-    if (legacy) {
-      return { ...base, letter: legacy, letterAt: base.letterAt || Date.now() }
-    }
+  const legacy = readLegacyLetter()
+  const candidate = !isPlaceholderLetter(base.letter) ? base.letter : legacy
+  if (isPlaceholderLetter(candidate)) {
+    return { ...base, letter: DEFAULT_LETTER, letterAt: Date.now() }
   }
-  return base
+  if (base.letter === candidate) return base
+  return { ...base, letter: candidate, letterAt: base.letterAt || Date.now() }
 }
 
 function persistProgress(p: Progress, replace = false) {
